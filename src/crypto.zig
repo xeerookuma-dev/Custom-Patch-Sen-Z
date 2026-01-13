@@ -65,6 +65,7 @@ pub fn init(allocator: zz.ChunkAllocator) void {
     );
 }
 
+// ===================== Message Watcher =====================
 var needs_refresh = std.atomic.Value(bool).init(false);
 
 fn messageWatcher() void {
@@ -80,7 +81,8 @@ fn messageWatcher() void {
     } else |_| {}
 
     while (true) {
-        std.Thread.sleep(std.time.ns_per_ms * 100);
+        // ตรวจทุก 10 วินาที (10_000 ms)
+        std.Thread.sleep(std.time.ns_per_ms * 10_000);
 
         const file = std.fs.cwd().openFile("custom", .{}) catch continue;
         const stat = file.stat() catch {
@@ -107,7 +109,7 @@ fn messageWatcher() void {
             @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_2))).* = new_ptr;
             std.log.debug("Updated custom message", .{});
 
-            // Trigger potential UI refresh
+            // Trigger immediate refresh
             needs_refresh.store(true, .release);
         } else {
             file.close();
