@@ -20,7 +20,7 @@ fn onAttach() void {
     FreeConsole();
     AllocConsole();
 
-    std.fs.File.stdout().writeAll(
+    std.debug.print(
         \\                                          __                        
         \\   _  _____  ___  _________  ____  ____  / /____  ______ ___  ____ _
         \\  | |/_/ _ \/ _ \/ ___/ __ \/ __ \/ __ \/ //_/ / / / __ `__ \/ __ `/
@@ -28,7 +28,7 @@ fn onAttach() void {
         \\/_/|_|\___/\___/_/   \____/\____/\____/_/|_|\__,_/_/ /_/ /_/\__,_/  
         \\ Latest Launcher By: xeeroookuma
         \\
-    ) catch {};
+    , .{});
 
     std.log.debug("provided by xeeroookuma", .{});
     std.log.debug("Sen-Z PS", .{});

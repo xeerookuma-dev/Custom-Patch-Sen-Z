@@ -1,41 +1,74 @@
-# Custom-Patch Sen-Z V2 (Windows)
+# Custom-Patch-Sen-Z-V2
 
-A powerful and lightweight custom patch injector and network utility for game optimization and feature enhancement on Windows. Specifically designed for compatibility with "Sen Z" related projects.
+Custom message patch for Zenless Zone Zero with editable external file support.
 
-## 🚀 Features
+## Features
 
-- **Real-time Patching**: Apply changes to the game without full restarts (experimental).
-- **Network Optimization**: Enhanced network handling via custom crypto and network modules.
-- **Discord Integration**: Automatic commit and event notifications to Discord webhooks (Bash & PowerShell support).
-- **Zig Powered**: Built with Zig for high performance and native Windows compatibility.
+✅ **Editable Custom Message**
+- Message loaded from external `custom` file
+- Edit message anytime without rebuilding
+- No hardcoded strings in binary
 
-## 🛠️ Windows Requirements
+✅ **Simple & Clean**
+- Minimal code changes
+- Easy to maintain
+- Stable and reliable
 
-- **Zig**: Version `0.13.0` or later (Recommended: `1.15.0`). Download from [ziglang.org](https://ziglang.org/download/).
-- **Git for Windows**: Required for version control and commit tracking.
-- **PowerShell 7+**: Recommended for running automation scripts.
+## How to Use
 
-## 📦 Installation (Windows)
-
-1. **Clone the repository**:
-   Open PowerShell and run:
-   ```powershell
-   git clone https://github.com/xeerookuma-dev/Custom-Patch-Sen-Z-V2.git
-   cd Custom-Patch-Sen-Z-V2
-   ```
-
-## 🔨 Build Instructions
-
-To build the project on Windows:
-
+### 1. Build
 ```powershell
-# Build in Debug mode
 zig build
-
-# Build in ReleaseSafe mode (optimized)
-zig build -Doptimize=ReleaseSafe
 ```
 
-The output executables will be located in the `zig-out\bin` directory.
+### 2. Run
+Copy `zig-out/bin/xeekuma.dll` to game directory and run the injector.
 
----
+### 3. Edit Message
+Edit the `custom` file in the game directory with your message.
+
+### 4. Refresh
+**Change language in game settings** (e.g., English → 中文 → English) to see the updated message.
+
+## Why Language Change?
+
+The game caches UI text separately. After extensive testing:
+- ❌ Real-time file watching doesn't trigger UI refresh
+- ❌ Memory scanning and pointer replacement ineffective
+- ❌ Il2Cpp metadata is encrypted (can't find UI refresh function easily)
+
+**Language change** is the only reliable way to refresh UI without deep reverse engineering.
+
+## Technical Details
+
+- **Language**: Zig 0.15.2
+- **Target**: Zenless Zone Zero (Il2Cpp Unity game)
+- **Method**: DLL injection with function hooking
+- **Message Storage**: External `custom` file (editable post-build)
+
+## File Structure
+
+```
+Custom-Patch-Sen-Z-V2/
+├── src/
+│   ├── root.zig          # Main entry point
+│   ├── crypto.zig        # RSA crypto hooks & message loading
+│   ├── network.zig       # Network request hooks
+│   └── util.zig          # Utility functions
+├── assets/
+│   ├── offsets           # Memory offsets
+│   ├── sdk_public_key.xml
+│   └── server_public_key.xml
+├── injector.zig          # DLL injector
+└── build.zig             # Build configuration
+```
+
+## Credits
+
+- **Developer**: xeeroookuma
+- **Framework**: Zig + zigzag
+- **Game**: Zenless Zone Zero by miHoYo
+
+## License
+
+For educational purposes only.

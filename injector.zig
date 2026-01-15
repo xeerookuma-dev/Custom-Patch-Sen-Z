@@ -12,6 +12,8 @@ const kernel32_name = unicode.utf8ToUtf16LeStringLiteral("kernel32.dll");
 
 pub extern "kernel32" fn ResumeThread(*anyopaque) callconv(.winapi) void;
 
+const CREATE_SUSPENDED: u32 = 0x00000004;
+
 extern "kernel32" fn VirtualAllocEx(
     windows.HANDLE,
     usize, // anyopaque doesn't allow null yet we need it here
@@ -39,10 +41,8 @@ extern "kernel32" fn CreateRemoteThread(
 
 pub fn main() !void {
     const game_executable = whichExecutable() orelse {
-        try std.fs.File.stdout().writeAll("Game executable doesn't exist. Press any key to exit...\n");
-
-        var buf: [1]u8 = undefined;
-        _ = std.fs.File.stdin().read(&buf) catch {};
+        std.debug.print("Game executable doesn't exist. Press any key to exit...\n", .{});
+        std.Thread.sleep(std.time.ns_per_s * 3);
         return;
     };
 
@@ -86,7 +86,7 @@ pub fn main() !void {
         null,
         null,
         0,
-        .{ .create_suspended = true },
+        @bitCast(CREATE_SUSPENDED),
         null,
         null,
         &startup_info,

@@ -41,20 +41,9 @@ pub fn init(allocator: zz.ChunkAllocator) void {
         util.ptrToStringAnsi(sdk_public_key);
 
     // Load message from external file (EDITABLE AFTER BUILD)
-    // Allocate two large buffers (4096 spaces each) for double buffering
-    const initial_buffer = " " ** 4096;
-    custom_msg_object_a = util.ptrToStringAnsi(initial_buffer);
-    custom_msg_object_b = util.ptrToStringAnsi(initial_buffer);
-    applyMessagePointer();
-
-    // Initial load
-    const initial_msg = loadMessageZ("custom");
-    util.updateCSharpString(custom_msg_object_a, initial_msg);
-    util.updateCSharpString(custom_msg_object_b, initial_msg);
-
-    // Start message watcher thread
-    const thread = std.Thread.spawn(.{}, messageWatcher, .{}) catch unreachable;
-    thread.detach();
+    const msg = loadMessageZ("custom");
+    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_2))).* =
+        util.ptrToStringAnsi(msg);
 
     initializeRsaCryptoServiceProvider();
 
@@ -71,94 +60,11 @@ pub fn init(allocator: zz.ChunkAllocator) void {
     );
 }
 
-// ===================== Hybrid Message Watcher =====================
-var needs_refresh = std.atomic.Value(bool).init(false);
-var custom_msg_object_a: usize = 0;
-var custom_msg_object_b: usize = 0;
-var use_buffer_b: bool = false;
-
-pub fn applyMessagePointer() void {
-    const obj = if (use_buffer_b) custom_msg_object_b else custom_msg_object_a;
-    if (obj == 0) return;
-    const base = root.base;
-    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_2))).* = obj;
-}
-
-fn messageWatcher() void {
-    const allocator = std.heap.page_allocator;
-    var last_mtime: i128 = 0;
-
-    // Initial check
-    if (std.fs.cwd().openFile("custom", .{}) catch null) |file| {
-        if (file.stat() catch null) |stat| {
-            last_mtime = stat.mtime;
-        }
-        file.close();
-    }
-
-    while (true) {
-        // ใช้ timer สำหรับ sleep 10 วินาที
-        const sleep_duration_ns = std.time.ns_per_ms * 100;
-        var slept_ns: u64 = 0;
-
-        while (slept_ns < sleep_duration_ns) {
-            // ตรวจไฟล์ทันที
-            const file = std.fs.cwd().openFile("custom", .{}) catch break;
-            const stat = file.stat() catch {
-                file.close();
-                break;
-            };
-
-            if (stat.mtime > last_mtime) {
-                last_mtime = stat.mtime;
-
-                const data = file.readToEndAlloc(allocator, 1024 * 1024) catch {
-                    file.close();
-                    break;
-                };
-                file.close();
-
-                const trimmed = std.mem.trimRight(u8, data, "\r\n");
-
-                // Update both buffers for consistency
-                util.updateCSharpString(custom_msg_object_a, trimmed);
-                util.updateCSharpString(custom_msg_object_b, trimmed);
-
-                // Toggle reference to trigger UI dirty check
-                use_buffer_b = !use_buffer_b;
-                applyMessagePointer();
-
-                allocator.free(data);
-
-                std.log.debug("Updated custom message (Double Buffer toggled)", .{});
-                needs_refresh.store(true, .release);
-
-                // รีเซ็ต slept_ns เพื่อรัน timer ใหม่
-                slept_ns = 0;
-                continue;
-            } else {
-                file.close();
-            }
-
-            // sleep สั้น ๆ เพื่อตรวจต่อเนื่อง
-            const short_sleep_ns = std.time.ns_per_ms * 50;
-            std.Thread.sleep(short_sleep_ns);
-            slept_ns += short_sleep_ns;
-        }
-    }
-}
-
 // ===================== Hooks =====================
 const SdkRsaEncryptHook = struct {
     pub var originalFn: *const fn (usize, usize) callconv(.c) usize = undefined;
 
     pub fn callback(_: usize, a2: usize) callconv(.c) usize {
-        applyMessagePointer();
-        if (needs_refresh.load(.acquire)) {
-            initializeRsaCryptoServiceProvider();
-            needs_refresh.store(false, .release);
-        }
-
         return @This().originalFn(
             util.ptrToStringAnsi(sdk_public_key),
             a2,
@@ -170,7 +76,6 @@ const NetworkStateHook = struct {
     pub var originalFn: *const fn (usize, usize) callconv(.c) usize = undefined;
 
     pub fn callback(state: usize, a2: usize) callconv(.c) usize {
-        applyMessagePointer();
         if (state == 15) initializeRsaCryptoServiceProvider();
         return @This().originalFn(state, a2);
     }
