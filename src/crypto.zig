@@ -6,14 +6,32 @@ const offsets = root.offsets;
 
 const sdk_public_key = @embedFile("sdk_public_key.xml");
 const server_public_key = @embedFile("server_public_key.xml");
-const custom_message = @embedFile("custom");
+const custom_message_default = @embedFile("custom"); // Fallback default
+
+var msg_buffer: [4096]u8 = undefined;
+
+fn readCustomMessage() ![]const u8 {
+    // Try to open "custom" in current working directory (usually game folder)
+    const file = try std.fs.cwd().openFile("custom", .{});
+    defer file.close();
+
+    // Read content into static buffer
+    const bytes_read = try file.readAll(&msg_buffer);
+    return msg_buffer[0..bytes_read];
+}
 
 pub fn init(allocator: zz.ChunkAllocator) void {
     const base = root.base;
 
     @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_1))).* = util.ptrToStringAnsi(sdk_public_key);
 
-    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_2))).* = util.ptrToStringAnsi(custom_message);
+    // Try to read custom message from file, fallback to embedded default
+    const custom_msg = readCustomMessage() catch |err| blk: {
+        std.log.warn("Failed to read custom file: {}, using default message", .{err});
+        break :blk custom_message_default;
+    };
+
+    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_2))).* = util.ptrToStringAnsi(custom_msg);
 
     initializeRsaCryptoServiceProvider();
 
