@@ -111,7 +111,8 @@ Custom-Patch-Sen-Z-V2/
 
 ### 👤 เครดิต
 
-- **ผู้พัฒนา**: xeeroookuma
+- **ผู้พัฒนา**: [xeerookuma](https://github.com/xeerookuma)
+- **Discord**: [Join Server](https://discord.gg/QwfTnEdAtN)
 - **Framework**: Zig + zigzag
 - **เกม**: Zenless Zone Zero โดย miHoYo
 
@@ -229,7 +230,8 @@ Custom-Patch-Sen-Z-V2/
 
 ### 👤 Credits
 
-- **Developer**: xeeroookuma
+- **Developer**: [xeerookuma](https://github.com/xeerookuma)
+- **Discord**: [Join Server](https://discord.gg/QwfTnEdAtN)
 - **Framework**: Zig + zigzag
 - **Game**: Zenless Zone Zero by miHoYo
 
