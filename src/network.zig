@@ -25,8 +25,6 @@ pub fn init(allocator: zz.ChunkAllocator) void {
     _ = root.intercept(allocator, root.base + root.offsets.unwrapOffset(.SYSTEM_URI_CREATE_THIS), SystemUriCreateThisHook);
 }
 
-const crypto = @import("crypto.zig");
-
 const MakeInitialUrlHook = struct {
     pub var originalFn: *const fn (usize, usize) callconv(.c) usize = undefined;
 

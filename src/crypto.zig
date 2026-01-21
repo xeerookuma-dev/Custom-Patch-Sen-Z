@@ -4,67 +4,28 @@ const zz = @import("zigzag");
 const util = @import("util.zig");
 const offsets = root.offsets;
 
-// ===================== Embedded RSA Keys =====================
 const sdk_public_key = @embedFile("sdk_public_key.xml");
 const server_public_key = @embedFile("server_public_key.xml");
+const custom_message = @embedFile("custom");
 
-// ===================== Runtime Message Loader =====================
-fn allocZString(allocator: std.mem.Allocator, msg: []const u8) [:0]u8 {
-    const buf = allocator.alloc(u8, msg.len + 1) catch unreachable;
-    @memcpy(buf[0..msg.len], msg);
-    buf[msg.len] = 0;
-    return buf[0..msg.len :0];
-}
-
-fn loadMessageZ(path: []const u8) [:0]u8 {
-    const allocator = std.heap.page_allocator;
-
-    const file = std.fs.cwd().openFile(path, .{}) catch {
-        return allocZString(allocator, "<message load failed>");
-    };
-    defer file.close();
-
-    const data = file.readToEndAlloc(allocator, 64 * 1024) catch {
-        return allocZString(allocator, "<message read failed>");
-    };
-
-    const trimmed = std.mem.trimRight(u8, data, "\r\n");
-    return allocZString(allocator, trimmed);
-}
-
-// ===================== Init =====================
 pub fn init(allocator: zz.ChunkAllocator) void {
     const base = root.base;
 
-    // SDK key
-    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_1))).* =
-        util.ptrToStringAnsi(sdk_public_key);
+    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_1))).* = util.ptrToStringAnsi(sdk_public_key);
 
-    // Load message from external file (EDITABLE AFTER BUILD)
-    const msg = loadMessageZ("custom");
-    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_2))).* =
-        util.ptrToStringAnsi(msg);
+    @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.CRYPTO_STR_2))).* = util.ptrToStringAnsi(custom_message);
 
     initializeRsaCryptoServiceProvider();
 
-    _ = root.intercept(
-        allocator,
-        base + offsets.unwrapOffset(.SDK_RSA_ENCRYPT),
-        SdkRsaEncryptHook,
-    );
-
-    _ = root.intercept(
-        allocator,
-        base + offsets.unwrapOffset(.NETWORK_STATE_CHANGE),
-        NetworkStateHook,
-    );
+    _ = root.intercept(allocator, base + offsets.unwrapOffset(.SDK_RSA_ENCRYPT), SdkRsaEncryptHook);
+    _ = root.intercept(allocator, base + offsets.unwrapOffset(.NETWORK_STATE_CHANGE), NetworkStateHook);
 }
 
-// ===================== Hooks =====================
 const SdkRsaEncryptHook = struct {
     pub var originalFn: *const fn (usize, usize) callconv(.c) usize = undefined;
 
     pub fn callback(_: usize, a2: usize) callconv(.c) usize {
+        std.log.debug("Replacing SDK RSA key", .{});
         return @This().originalFn(
             util.ptrToStringAnsi(sdk_public_key),
             a2,
@@ -81,21 +42,14 @@ const NetworkStateHook = struct {
     }
 };
 
-// ===================== RSA Init =====================
 pub fn initializeRsaCryptoServiceProvider() void {
     const base = root.base;
 
-    const statics =
-        @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.RSA_STATICS))).*;
+    const statics = @as(*usize, @ptrFromInt(base + offsets.unwrapOffset(.RSA_STATICS))).*;
+    const rcsp_field: *usize = @ptrFromInt(statics + offsets.unwrapOffset(.RSA_STATIC_ID));
 
-    const rcsp_field: *usize =
-        @ptrFromInt(statics + offsets.unwrapOffset(.RSA_STATIC_ID));
-
-    const rsaCreate: *const fn () callconv(.c) usize =
-        @ptrFromInt(base + offsets.unwrapOffset(.RSA_CREATE));
-
-    const rsaFromXmlString: *const fn (usize, usize) callconv(.c) void =
-        @ptrFromInt(base + offsets.unwrapOffset(.RSA_FROM_XML_STRING));
+    const rsaCreate: *const fn () callconv(.c) usize = @ptrFromInt(base + offsets.unwrapOffset(.RSA_CREATE));
+    const rsaFromXmlString: *const fn (usize, usize) callconv(.c) void = @ptrFromInt(base + offsets.unwrapOffset(.RSA_FROM_XML_STRING));
 
     const instance = rsaCreate();
     rsaFromXmlString(instance, util.ptrToStringAnsi(server_public_key));
