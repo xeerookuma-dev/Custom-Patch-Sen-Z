@@ -13,13 +13,6 @@
 ✅ **แก้ไขข้อความกำหนดเองได้ง่าย**
 - โหลดข้อความจากไฟล์ `src/custom` ตอน build
 - แก้ไขข้อความเป็น plain text พร้อมรองรับ Rich Text formatting
-- rebuild ง่ายๆ เพื่ออัพเดทข้อความ
-- ไม่มีการเข้ารหัสที่ซับซ้อนหรือ hardcoded strings
-
-✅ **เรียบง่าย & สะอาด**
-- แก้ไขโค้ดน้อยที่สุด
-- ดูแลรักษาง่าย
-- เสถียรและน่าเชื่อถือ
 
 ### 🆕 การเปลี่ยนแปลงล่าสุด (v2.4)
 
@@ -28,7 +21,6 @@
 **ตอนนี้**: 
 - 🔄 **Runtime Monitoring**: โปรแกรมจะคอยตรวจจับการแก้ไขไฟล์ `custom` ทุก 2 วินาที
 - ✅ **แก้ไขได้โดยไม่ต้องเปิดปิดเกมใหม่**: เพียงแค่สลับภาษาเพื่อ Refresh UI
-- ✅ **แม่นยำขึ้น**: ใช้ระบบหา path แบบใหม่ (Robust Path Finding) รับรองว่าหาไฟล์เจอแน่นอน
 
 ### 📖 วิธีใช้งาน
 
@@ -132,13 +124,6 @@ Custom message patch for Zenless Zone Zero with simplified build-time message em
 ✅ **Runtime Custom Message Editing**
 - Message loaded from `src/custom` file
 - **Runtime Updates**: Edit file and switch language to see changes
-- Support internal `custom` file monitoring
-- No hardcoded strings in binary
-
-✅ **Simple & Clean**
-- Minimal code changes
-- Easy to maintain
-- Stable and reliable
 
 ### 🆕 Recent Changes (v2.4)
 
@@ -147,7 +132,6 @@ Custom message patch for Zenless Zone Zero with simplified build-time message em
 **Now**:
 - 🔄 **Runtime Monitoring**: Automatically detects changes to `custom` file every 2 seconds.
 - ✅ **No Restart Needed**: Just switch language to refresh the UI.
-- ✅ **Robust Path Finding**: Improved logic to reliably locate the custom file.
 
 ### 📖 How to Use
 
